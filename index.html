@@ -105,12 +105,12 @@
 
             <div class="flex items-center gap-3 flex-wrap">
               <select id="periodFilter" class="text-sm font-semibold p-2 border rounded-lg bg-slate-50 text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <option value="all">Show All Periods</option>
+                <option value="all" selected>Show All Periods</option>
                 <option value="auto">Auto-Sync with Clock</option>
                 <option value="1">Period 1</option>
                 <option value="2">Period 2</option>
                 <option value="3">Period 3</option>
-                <option value="4" selected>Period 4</option>
+                <option value="4">Period 4</option>
                 <option value="5">Period 5</option>
                 <option value="6">Period 6</option>
               </select>
@@ -420,6 +420,10 @@
       const search = document.getElementById("searchRoster").value.toLowerCase();
       const filterVal = document.getElementById("periodFilter").value;
 
+      // Formatting safeguard for teacher key matching
+      const formattedTeacher = currentTeacher.charAt(0).toUpperCase() + currentTeacher.slice(1).toLowerCase();
+      let roster = MASTER_ROSTER[formattedTeacher] || MASTER_ROSTER["Williams"] || [];
+
       let selectedPeriod;
       if (filterVal === "auto") {
         selectedPeriod = activePeriod;
@@ -429,9 +433,7 @@
         selectedPeriod = parseInt(filterVal, 10);
       }
 
-      let roster = MASTER_ROSTER[currentTeacher] || [];
-
-      if (selectedPeriod !== "all") {
+      if (selectedPeriod !== "all" && selectedPeriod !== null) {
         roster = roster.filter(s => Number(s.period) === Number(selectedPeriod));
       }
 
@@ -455,9 +457,9 @@
           if (b.studentB === s.name && activeOutNames.includes(b.studentA)) blockedBy = b.studentA;
         });
 
-        const passCountKey = `${currentTeacher}_${s.name}`;
+        const passCountKey = `${formattedTeacher}_${s.name}`;
         const basePasses = 5;
-        const currentPasses = (liveData.adjustments || {})[passCountKey] !== undefined ? liveData.adjustments[passKey] : basePasses;
+        const currentPasses = (liveData.adjustments || {})[passCountKey] !== undefined ? liveData.adjustments[passCountKey] : basePasses;
 
         return `
           <tr class="hover:bg-slate-50">
@@ -599,7 +601,8 @@
       const action = btn.dataset.action;
       const studentName = btn.dataset.student;
       const period = btn.dataset.period;
-      const passKey = `${currentTeacher}_${studentName}`;
+      const formattedTeacher = currentTeacher.charAt(0).toUpperCase() + currentTeacher.slice(1).toLowerCase();
+      const passKey = `${formattedTeacher}_${studentName}`;
 
       if (action === "sign-out") {
         const currentPasses = (liveData.adjustments || {})[passKey] !== undefined ? liveData.adjustments[passKey] : 5;
@@ -613,7 +616,7 @@
         if (!liveData.passes) liveData.passes = {};
         liveData.passes[passId] = {
           student: studentName,
-          teacher: currentTeacher,
+          teacher: formattedTeacher,
           period: parseInt(period, 10),
           time: Date.now()
         };
